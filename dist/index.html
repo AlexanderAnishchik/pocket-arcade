@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1efe6"><meta name="description" content="Small games. Big nostalgia. Play Snake, Pong and Breakout in your own little retro console.">
+  <title>Pocket Arcade — Small games. Big nostalgia.</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b5545'/%3E%3Cpath d='M12 25h40v20H12zm8-8h24v8H20z' fill='%23c9e7b4'/%3E%3Cpath d='M21 29v12m-6-6h12' stroke='%232b5545' stroke-width='4'/%3E%3Ccircle cx='42' cy='34' r='3' fill='%232b5545'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="games.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+  <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M7 7h10l4 12h-5l-2-3h-4l-2 3H3L7 7Z"/><path d="M8 10v5m-2.5-2.5h5M16 11h.01M18 14h.01"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4ZM17 8q5 4 0 8"/></symbol>
+    <symbol id="i-muted" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4ZM17 9l5 6m0-6-5 6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></symbol>
+  </defs></svg>
+  <div class="page">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Pocket Arcade home"><span class="brand-icon"><svg><use href="#i-gamepad"/></svg></span>pocket<span class="brand-light">arcade</span><span class="brand-dot">®</span></a>
+      <span class="header-note">GOOD GAMES. NO GROWING UP REQUIRED.</span>
+      <button class="sound-button" id="sound" aria-pressed="false"><svg><use href="#i-muted"/></svg><span>Sound off</span></button>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div><div class="eyebrow"><span class="tiny-spark">✳</span> YOUR FIVE-MINUTE HAPPY PLACE</div><h1 id="page-title">Small games. <span>Big nostalgia.</span></h1></div>
+        <p>Nothing to download. Nowhere to be.<br> Pick a cartridge. Make some pixels move.</p>
+      </section>
+      <div class="arcade-layout">
+        <section class="console" aria-label="Retro gaming console">
+          <span class="screw screw-tl" aria-hidden="true"></span><span class="screw screw-tr" aria-hidden="true"></span>
+          <div class="console-top"><span class="console-wordmark">POCKET<span> ARCADE</span></span><div class="power-label"><span></span> POWER <b>01</b></div></div>
+          <div class="bezel" id="display">
+            <div class="screen-hud"><div><span>SCORE</span><strong id="score">0000</strong></div><div class="hud-game"><span id="game-name">SNAKE</span><small id="game-status">LEVEL 01</small></div><div class="best-hud"><span>BEST</span><strong id="best">0000</strong></div></div>
+            <div class="screen-wrap">
+              <canvas id="game" width="720" height="450" tabindex="0" aria-label="Snake game. Use arrow keys or WASD to move.">Your browser needs canvas support to play these games.</canvas>
+              <div class="scanlines" aria-hidden="true"></div>
+              <div class="game-overlay" id="overlay">
+                <div class="overlay-content"><span class="overlay-kicker" id="overlay-kicker">CARTRIDGE 01 / READY TO PLAY</span><div class="pixel-mark" id="pixel-mark" aria-hidden="true">▟</div><h2 id="overlay-title">SNAKE</h2><p id="overlay-copy">A little hungry. A little reckless.<br>How long can you go?</p><button id="start" class="start-button"><svg><use href="#i-play"/></svg><span>Let's play</span></button><span id="start-hint" class="start-hint">OR PRESS ENTER</span></div>
+              </div>
+            </div>
+            <div class="screen-bottom"><span><i id="state-led"></i><span id="state-label">READY WHEN YOU ARE</span></span><button id="fullscreen" aria-label="Toggle fullscreen"><svg><use href="#i-expand"/></svg></button></div>
+          </div>
+          <div class="console-controls">
+            <div class="dpad" role="group" aria-label="Directional controls">
+              <span class="dpad-center" aria-hidden="true"></span>
+              <button class="d-up" data-dir="up" aria-label="Move up">▲</button><button class="d-left" data-dir="left" aria-label="Move left">◀</button><button class="d-right" data-dir="right" aria-label="Move right">▶</button><button class="d-down" data-dir="down" aria-label="Move down">▼</button>
+            </div>
+            <div class="center-controls"><div class="small-buttons"><button id="restart" aria-label="Restart game"><span><svg><use href="#i-restart"/></svg></span>RESET</button><button id="pause" aria-label="Pause game" disabled><span><svg><use href="#i-pause"/></svg></span><b id="pause-label">PAUSE</b></button></div><span class="console-model">A LITTLE ESCAPE / MODEL 001</span></div>
+            <div class="action-control"><button id="action" aria-label="Start or pause game">A</button><span id="action-label">START / PAUSE</span></div>
+          </div>
+          <span class="screw screw-bl" aria-hidden="true"></span><span class="screw screw-br" aria-hidden="true"></span>
+        </section>
+        <aside class="library" aria-label="Game library">
+          <div class="library-heading"><h2>Pick your pixel fix.</h2><span>03 GAMES</span></div>
+          <div class="cartridges" role="group" aria-label="Select a game">
+            <button class="cartridge selected" data-game="snake" aria-pressed="true"><span class="cartridge-art snake-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M15 45V24h29v22h17V34" fill="none" stroke="currentColor" stroke-width="10"/><rect x="54" y="29" width="14" height="13" fill="currentColor"/><rect x="61" y="31" width="3" height="3" fill="#254738"/><rect x="17" y="50" width="7" height="7" fill="#eeab6b"/></svg></span><span class="cartridge-info"><small>01 / THE HUNGRY ONE</small><strong>Snake</strong><span>Eat. Grow. Don't crash.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
+            <button class="cartridge" data-game="pong" aria-pressed="false"><span class="cartridge-art pong-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M40 8v52" stroke="currentColor" stroke-width="2" stroke-dasharray="4 5" opacity=".3"/><path d="M15 13v23M65 32v23" stroke="currentColor" stroke-width="6"/><rect x="27" y="36" width="7" height="7" fill="currentColor"/></svg></span><span class="cartridge-info"><small>02 / THE RIVALRY</small><strong>Pong</strong><span>You. The CPU. First to 5.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
+            <button class="cartridge" data-game="breakout" aria-pressed="false"><span class="cartridge-art breakout-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M8 14h17m6 0h17m6 0h17M8 25h17m6 0h17m6 0h17" stroke="currentColor" stroke-width="8"/><path d="M30 57h22" stroke="currentColor" stroke-width="5"/><rect x="47" y="40" width="5" height="5" fill="#fff0d3"/></svg></span><span class="cartridge-info"><small>03 / THE SATISFYING ONE</small><strong>Breakout</strong><span>Goodbye, little bricks.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
+          </div>
+          <div class="quick-guide"><div class="guide-heading"><span>THE QUICK HOW-TO</span><button id="help" aria-label="Open game instructions">?</button></div><p id="game-instructions">Chase the snacks. Avoid the walls<br>and your ever-growing tail.</p><div id="control-hint" class="control-hint"><span class="key-cluster"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>or <b>W A S D</b> to move</span></div><div class="touch-hint">On your phone? Use the D-pad below.</div></div>
+          <div class="save-note"><svg><use href="#i-star"/></svg><span>Little victories, remembered.<br><b>Your best scores save on this device.</b></span></div>
+        </aside>
+      </div>
+      <div class="under-console"><span><span class="live-dot"></span> ALL PLAY. NO PAY.</span><span><kbd>SPACE</kbd> pause <span class="shortcut-divider">/</span> <kbd>R</kbd> restart</span><button id="crt" aria-pressed="true">CRT effect <b>ON</b></button></div>
+    </main>
+    <footer><span>MADE FOR THE JOY OF IT.</span><span>One more game? <span class="footer-star">✳</span> Thought so.</span><span>EST. 2026 · 8-BIT AT HEART</span></footer>
+  </div>
+  <dialog id="help-dialog"><button id="close-help" class="close-help" aria-label="Close instructions">×</button><span class="eyebrow">THE VERY SHORT MANUAL</span><h2 id="help-title">How to play Snake</h2><p id="help-copy"></p><dl><div><dt>Move</dt><dd id="help-move"></dd></div><div><dt>Start / resume</dt><dd>Enter or the A button</dd></div><div><dt>Pause</dt><dd>Space, P, or Escape</dd></div><div><dt>Restart</dt><dd>R or RESET</dd></div></dl><p class="dialog-note">Switching games starts a fresh round. Best scores stay saved on this device.</p><button id="help-done" class="start-button">Got it. Let's play.</button></dialog>
+  <div id="announcement" class="sr-only" aria-live="polite"></div>
+</body>
+</html>
