@@ -11,7 +11,7 @@
   const save = (key,value) => {try{localStorage.setItem('pocket-arcade-'+key,JSON.stringify(value));}catch{}};
   let bests=read('bests',{}); if(!bests || typeof bests!=='object' || Array.isArray(bests)) bests={};
   for(const id in catalog) if(!Number.isFinite(bests[id]) || bests[id]<0)bests[id]=0;
-  let soundOn=read('sound',false)===true, crtOn=read('crt',true)!==false;
+  let soundOn=read('sound',true)===true, crtOn=read('crt',true)!==false;
   let active='snake', game, phase='ready', currentScore=0, dirty=true, last=0, audioContext;
   let held=new Set(), pointerHeld=new Set(), touchStart=null;
   const format=n=>String(Math.floor(n)).padStart(4,'0');
