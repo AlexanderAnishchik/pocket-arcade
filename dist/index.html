@@ -24,14 +24,13 @@
   <div class="page">
     <header class="site-header">
       <a class="brand" href="./" aria-label="Pocket Arcade home"><span class="brand-icon"><svg><use href="#i-gamepad"/></svg></span>pocket<span class="brand-light">arcade</span><span class="brand-dot">®</span></a>
-      <span class="header-note">GOOD GAMES. NO GROWING UP REQUIRED.</span>
-      <button class="sound-button" id="sound" aria-pressed="true"><svg><use href="#i-sound"/></svg><span>Sound on</span></button>
+      <h1 class="header-title" id="page-title">Small games. <span>Big nostalgia.</span></h1>
     </header>
     <main>
-      <section class="intro" aria-labelledby="page-title">
-        <div><div class="eyebrow"><span class="tiny-spark">✳</span> YOUR FIVE-MINUTE HAPPY PLACE</div><h1 id="page-title">Small games. <span>Big nostalgia.</span></h1></div>
+      <div class="intro">
+        <div class="eyebrow"><span class="tiny-spark">✳</span> YOUR FIVE-MINUTE HAPPY PLACE</div>
         <p>Nothing to download. Nowhere to be.<br> Pick a cartridge. Make some pixels move.</p>
-      </section>
+      </div>
       <div class="arcade-layout">
         <section class="console" aria-label="Retro gaming console">
           <span class="screw screw-tl" aria-hidden="true"></span><span class="screw screw-tr" aria-hidden="true"></span>
@@ -65,7 +64,8 @@
             <button class="cartridge" data-game="pong" aria-pressed="false"><span class="cartridge-art pong-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M40 8v52" stroke="currentColor" stroke-width="2" stroke-dasharray="4 5" opacity=".3"/><path d="M15 13v23M65 32v23" stroke="currentColor" stroke-width="6"/><rect x="27" y="36" width="7" height="7" fill="currentColor"/></svg></span><span class="cartridge-info"><small>02 / THE RIVALRY</small><strong>Pong</strong><span>You. The CPU. First to 5.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
             <button class="cartridge" data-game="breakout" aria-pressed="false"><span class="cartridge-art breakout-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M8 14h17m6 0h17m6 0h17M8 25h17m6 0h17m6 0h17" stroke="currentColor" stroke-width="8"/><path d="M30 57h22" stroke="currentColor" stroke-width="5"/><rect x="47" y="40" width="5" height="5" fill="#fff0d3"/></svg></span><span class="cartridge-info"><small>03 / THE SATISFYING ONE</small><strong>Breakout</strong><span>Goodbye, little bricks.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
           </div>
-          <div class="quick-guide"><div class="guide-heading"><span>THE QUICK HOW-TO</span><button id="help" aria-label="Open game instructions">?</button></div><p id="game-instructions">Chase the snacks. Avoid the walls<br>and your ever-growing tail.</p><div id="control-hint" class="control-hint"><span class="key-cluster"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>or <b>W A S D</b> to move</span></div><div class="touch-hint">On your phone? Use the D-pad below.</div></div>
+          <div class="sound-settings"><button class="sound-button" id="sound" aria-pressed="true"><svg><use href="#i-sound"/></svg><span>Sound on</span></button></div>
+          <div class="quick-guide"><div class="guide-heading"><span>THE QUICK HOW-TO</span><button id="help" aria-label="Open game instructions">?</button></div><p id="game-instructions">Chase the snacks. Avoid the walls<br>and your ever-growing tail.</p><div id="control-hint" class="control-hint"><span class="key-cluster"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>or <b>W A S D</b> to move</span></div><div class="control-hint pause-hint"><kbd>SPACE</kbd><span>to pause / resume</span></div><div class="touch-hint">On your phone? Use the D-pad below.</div></div>
           <div class="save-note"><svg><use href="#i-star"/></svg><span>Little victories, remembered.<br><b>Your best scores save on this device.</b></span></div>
         </aside>
       </div>
