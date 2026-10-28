@@ -64,8 +64,17 @@
   $('close-help').addEventListener('click',()=>$('help-dialog').close());$('help-done').addEventListener('click',()=>$('help-dialog').close());
   $('help-dialog').addEventListener('click',event=>{if(event.target===$('help-dialog')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)event.target.close();}});
   const fullscreenButton=$('fullscreen');
-  if(!document.fullscreenEnabled)fullscreenButton.hidden=true;
-  fullscreenButton.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('display').requestFullscreen();}catch{announce('Fullscreen is unavailable in this preview. You can keep playing here.');}});
+  $('display-toolbar').hidden=!document.fullscreenEnabled;
+  function syncFullscreen(){
+    const expanded=document.fullscreenElement===$('display');
+    fullscreenButton.querySelector('span').textContent=expanded?'Exit full screen':'Full screen';
+    fullscreenButton.querySelector('use').setAttribute('href',expanded?'#i-collapse':'#i-expand');
+    fullscreenButton.title=expanded?'Return to the console':'Play in full screen';
+    $('fullscreen-hint').textContent=expanded?'Your arcade, expanded':'More room to play';
+  }
+  document.addEventListener('fullscreenchange',syncFullscreen);
+  syncFullscreen();
+  fullscreenButton.addEventListener('click',async()=>{try{if(document.fullscreenElement===$('display'))await document.exitFullscreen();else await $('display').requestFullscreen();if(phase==='running')canvas.focus({preventScroll:true});}catch{announce('Fullscreen is unavailable in this preview. You can keep playing here.');}});
   function frame(time){const dt=Math.min(.04,Math.max(0,(time-last)/1000));last=time;if(phase==='running'){const input=new Set([...held,...pointerHeld]);game.update(dt,input);dirty=true;}if(dirty){ctx.clearRect(0,0,720,450);game.draw(ctx);dirty=false;}requestAnimationFrame(frame);}
   renderSettings();select('snake');requestAnimationFrame(frame);
 })();
