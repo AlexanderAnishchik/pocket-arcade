@@ -318,5 +318,192 @@
     };
   }
 
-  window.RetroGames = { snake: { create: snake }, pong: { create: pong }, breakout: { create: breakout } };
+  function airhockey(api) {
+    const left = 26, right = W - 26, top = 26, bottom = H - 26;
+    const goalTop = H / 2 - 72, goalBottom = H / 2 + 72;
+    const malletRadius = 24, puckRadius = 10, postRadius = 5, winningScore = 7;
+    const playerColor = palette.cyan, cpuColor = '#ed9b85', fx = particles();
+    let player, cpu, puck, playerPoints, cpuPoints, target, cpuTarget, reaction;
+    let serve, ended, trail, message, idle;
+
+    function updateScore() {
+      api.score(playerPoints);
+      api.status('YOU ' + playerPoints + ' : ' + cpuPoints + ' CPU');
+    }
+    function faceoff(toward, label) {
+      player = { x: 126, y: H / 2, vx: 0, vy: 0 };
+      cpu = { x: W - 126, y: H / 2, vx: 0, vy: 0 };
+      puck = { x: W / 2, y: H / 2, vx: toward * 290, vy: random(-105, 105) };
+      target = null; cpuTarget = { x: cpu.x, y: cpu.y }; reaction = 0;
+      serve = 1.15; idle = 0; trail = []; message = label;
+    }
+    function point(playerWon) {
+      if (playerWon) playerPoints++; else cpuPoints++;
+      fx.burst(playerWon ? right : left, puck.y, playerWon ? playerColor : cpuColor, 24);
+      updateScore(); beep(api, playerWon ? 780 : 160, .18, 'triangle');
+      if (playerPoints === winningScore || cpuPoints === winningScore) {
+        ended = true;
+        api.finish(playerWon, playerWon ? 'Seven goals. You own the rink!' : 'The CPU takes the rink. Time for a rematch?');
+      } else faceoff(playerWon ? 1 : -1, playerWon ? 'YOU SCORE!' : 'CPU SCORES');
+    }
+    function moveMallet(mallet, x, y, speed, dt, isPlayer) {
+      x = clamp(x, isPlayer ? left + malletRadius : W / 2 + malletRadius,
+        isPlayer ? W / 2 - malletRadius : right - malletRadius);
+      y = clamp(y, top + malletRadius, bottom - malletRadius);
+      const dx = x - mallet.x, dy = y - mallet.y, distance = Math.hypot(dx, dy);
+      const ratio = distance ? Math.min(1, speed * dt / distance) : 0;
+      mallet.vx = dx * ratio / dt; mallet.vy = dy * ratio / dt;
+      mallet.x += dx * ratio; mallet.y += dy * ratio;
+    }
+    function hitMallet(mallet, color) {
+      const dx = puck.x - mallet.x, dy = puck.y - mallet.y;
+      const distance = Math.hypot(dx, dy), separation = malletRadius + puckRadius;
+      if (distance >= separation) return;
+      const nx = distance > .001 ? dx / distance : (mallet === player ? 1 : -1);
+      const ny = distance > .001 ? dy / distance : 0;
+      puck.x = mallet.x + nx * (separation + .05);
+      puck.y = mallet.y + ny * (separation + .05);
+      // Reflect relative velocity so a moving mallet transfers momentum to the puck.
+      const approach = (puck.vx - mallet.vx) * nx + (puck.vy - mallet.vy) * ny;
+      if (approach < 0) {
+        puck.vx -= 1.9 * approach * nx; puck.vy -= 1.9 * approach * ny;
+        fx.burst(puck.x, puck.y, color, 5);
+        beep(api, mallet === player ? 420 : 310, .035, 'triangle');
+      }
+    }
+    function hitPost(x, y) {
+      const dx = puck.x - x, dy = puck.y - y, distance = Math.hypot(dx, dy);
+      const separation = puckRadius + postRadius;
+      if (distance >= separation) return;
+      const nx = distance > .001 ? dx / distance : (x === left ? 1 : -1);
+      const ny = distance > .001 ? dy / distance : 0;
+      puck.x = x + nx * (separation + .05); puck.y = y + ny * (separation + .05);
+      const approach = puck.vx * nx + puck.vy * ny;
+      if (approach < 0) { puck.vx -= 2 * approach * nx; puck.vy -= 2 * approach * ny; }
+    }
+    function walls() {
+      let bounced = false;
+      if (puck.y < top + puckRadius) { puck.y = top + puckRadius; puck.vy = Math.abs(puck.vy); bounced = true; }
+      if (puck.y > bottom - puckRadius) { puck.y = bottom - puckRadius; puck.vy = -Math.abs(puck.vy); bounced = true; }
+      if (puck.y <= goalTop || puck.y >= goalBottom) {
+        if (puck.x < left + puckRadius) { puck.x = left + puckRadius; puck.vx = Math.abs(puck.vx); bounced = true; }
+        if (puck.x > right - puckRadius) { puck.x = right - puckRadius; puck.vx = -Math.abs(puck.vx); bounced = true; }
+      }
+      for (const x of [left, right]) for (const y of [goalTop, goalBottom]) hitPost(x, y);
+      if (bounced) beep(api, 210, .025, 'triangle');
+      // Give nearly vertical rallies a gentle sideways drift to keep the match moving.
+      if (bounced && Math.abs(puck.vx) < 70) puck.vx = puck.x < W / 2 ? 70 : -70;
+    }
+    function aimCPU(dt) {
+      reaction -= dt;
+      if (reaction > 0) return;
+      reaction = .10;
+      if (puck.x > W / 2 + 18) {
+        // Get behind a slow puck, then strike toward the player's goal.
+        cpuTarget = {
+          x: puck.x + (cpu.x < puck.x + 12 ? 58 : -22),
+          y: puck.y + (cpu.x < puck.x + 12 ? (puck.y < H / 2 ? 38 : -38) : 0)
+        };
+      } else {
+        cpuTarget = { x: right - 100, y: H / 2 + (puck.y - H / 2) * .55 };
+      }
+    }
+    function circle(ctx, x, y, radius, fill, stroke) {
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
+    }
+    function drawMallet(ctx, mallet, color) {
+      circle(ctx, mallet.x, mallet.y + 4, malletRadius + 2, '#081712');
+      ctx.lineWidth = 3; circle(ctx, mallet.x, mallet.y, malletRadius, color, '#ecfff2');
+      ctx.lineWidth = 2; circle(ctx, mallet.x, mallet.y, 13, '#172d28', color);
+      circle(ctx, mallet.x - 4, mallet.y - 5, 4, '#ffffff66');
+    }
+    return {
+      reset() {
+        playerPoints = cpuPoints = 0; ended = false; fx.clear();
+        faceoff(-1, 'FIRST TO 7'); updateScore();
+      },
+      direction() {}, action() {},
+      pointer(x, y) { if (Number.isFinite(x) && Number.isFinite(y)) target = { x, y }; },
+      releaseInput() { target = null; },
+      update(dt, input = new Set()) {
+        if (ended || !Number.isFinite(dt) || dt <= 0) return;
+        dt = Math.min(dt, .05); fx.update(dt);
+        const mx = Number(input.has('right')) - Number(input.has('left'));
+        const my = Number(input.has('down')) - Number(input.has('up'));
+        const moving = mx !== 0 || my !== 0, length = Math.hypot(mx, my) || 1;
+        if (moving) target = null;
+        // Move mallets and puck together in small steps, including fast pointer swipes.
+        const steps = Math.ceil(dt / (1 / 240)), step = dt / steps;
+        for (let i = 0; i < steps; i++) {
+          const destination = moving ? { x: player.x + mx / length * 500 * step, y: player.y + my / length * 500 * step } : target || player;
+          moveMallet(player, destination.x, destination.y, moving ? 500 : 740, step, true);
+          if (serve > 0) { serve = Math.max(0, serve - step); continue; }
+          aimCPU(step);
+          moveMallet(cpu, cpuTarget.x, cpuTarget.y, 300 + cpuPoints * 5, step, false);
+          puck.x += puck.vx * step; puck.y += puck.vy * step;
+          hitMallet(player, playerColor); hitMallet(cpu, cpuColor); walls();
+          if (puck.x < left - puckRadius) { point(false); break; }
+          if (puck.x > right + puckRadius) { point(true); break; }
+          const speed = Math.hypot(puck.vx, puck.vy);
+          const friction = speed > 160 ? Math.exp(-.08 * step) : 1;
+          const ratio = Math.min(friction, 980 / (speed || 1));
+          puck.vx *= ratio; puck.vy *= ratio;
+          idle = speed < 100 ? idle + step : 0;
+          if (idle > 1.5) { puck.vx = puck.x < W / 2 ? -160 : 160; puck.vy = random(-70, 70); idle = 0; }
+        }
+        if (serve <= 0) { trail.push({ x: puck.x, y: puck.y }); if (trail.length > 9) trail.shift(); }
+      },
+      draw(ctx) {
+        background(ctx, 24);
+        ctx.fillStyle = '#142721'; ctx.fillRect(left, top, right - left, bottom - top);
+        ctx.fillStyle = '#88e6dc04'; ctx.fillRect(left, top, W / 2 - left, bottom - top);
+        ctx.fillStyle = '#ed9b8505'; ctx.fillRect(W / 2, top, right - W / 2, bottom - top);
+        ctx.fillStyle = '#456155';
+        for (let x = 48; x < right; x += 24) for (let y = 48; y < bottom; y += 24) ctx.fillRect(x, y, 1, 1);
+        ctx.lineWidth = 2; ctx.strokeStyle = '#39564c';
+        ctx.setLineDash([6, 9]); ctx.beginPath(); ctx.moveTo(W / 2, top); ctx.lineTo(W / 2, bottom); ctx.stroke(); ctx.setLineDash([]);
+        circle(ctx, W / 2, H / 2, 66, null, '#39564c'); circle(ctx, W / 2, H / 2, 5, '#39564c');
+        for (const [x, color] of [[left, playerColor], [right, cpuColor]]) {
+          ctx.save(); ctx.beginPath(); ctx.rect(left, top, right - left, bottom - top); ctx.clip();
+          ctx.globalAlpha = .2; circle(ctx, x, H / 2, 102, null, color); ctx.restore();
+          ctx.fillStyle = color; ctx.globalAlpha = .14;
+          ctx.fillRect(x === left ? 5 : right, goalTop, 21, goalBottom - goalTop); ctx.globalAlpha = 1;
+          ctx.strokeStyle = color; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(x, goalTop); ctx.lineTo(x, top); ctx.lineTo(W / 2, top);
+          ctx.moveTo(x, goalBottom); ctx.lineTo(x, bottom); ctx.lineTo(W / 2, bottom); ctx.stroke();
+          circle(ctx, x, goalTop, postRadius, '#e2edcf'); circle(ctx, x, goalBottom, postRadius, '#e2edcf');
+        }
+        ctx.textAlign = 'center'; ctx.font = 'bold 58px monospace'; ctx.globalAlpha = .14;
+        ctx.fillStyle = playerColor; ctx.fillText(playerPoints, W / 2 - 86, 126);
+        ctx.fillStyle = cpuColor; ctx.fillText(cpuPoints, W / 2 + 86, 126); ctx.globalAlpha = 1;
+        ctx.font = '12px monospace'; ctx.fillStyle = playerColor; ctx.fillText('YOU', 145, bottom - 18);
+        ctx.fillStyle = '#93a69a'; ctx.fillText('FIRST TO 7', W / 2, bottom - 18);
+        ctx.fillStyle = cpuColor; ctx.fillText('CPU', W - 145, bottom - 18);
+        for (let i = 0; i < trail.length; i++) {
+          ctx.globalAlpha = i / trail.length * .2;
+          circle(ctx, trail[i].x, trail[i].y, puckRadius * (.5 + i / trail.length * .5), '#fff0c9');
+        }
+        ctx.globalAlpha = 1;
+        drawMallet(ctx, player, playerColor); drawMallet(ctx, cpu, cpuColor);
+        circle(ctx, puck.x, puck.y + 3, puckRadius, '#081712');
+        ctx.lineWidth = 2; circle(ctx, puck.x, puck.y, puckRadius, '#fff0c9', '#dcb56c');
+        circle(ctx, puck.x - 3, puck.y - 3, 3, '#ffffff');
+        if (serve > 0 && !ended) {
+          ctx.fillStyle = '#10221feb'; ctx.fillRect(W / 2 - 110, H / 2 + 84, 220, 34);
+          ctx.font = 'bold 14px monospace'; ctx.fillStyle = '#e2edcf';
+          ctx.fillText(message + ' · ' + Math.ceil(serve), W / 2, H / 2 + 106);
+        }
+        fx.draw(ctx);
+      },
+      inspect() {
+        return { type: 'airhockey', player: { ...player }, cpu: { ...cpu }, puck: { ...puck },
+          playerPoints, cpuPoints, serve, ended, malletRadius, puckRadius, postRadius, winningScore,
+          rink: { left, right, top, bottom, goalTop, goalBottom } };
+      }
+    };
+  }
+
+  window.RetroGames = { snake: { create: snake }, pong: { create: pong }, breakout: { create: breakout }, airhockey: { create: airhockey } };
 })();

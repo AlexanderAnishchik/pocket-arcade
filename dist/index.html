@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f1efe6"><meta name="description" content="Small games. Big nostalgia. Play Snake, Pong and Breakout in your own little retro console.">
+  <meta name="theme-color" content="#f1efe6"><meta name="description" content="Small games. Big nostalgia. Play Snake, Pong, Breakout and Air Hockey in your own little retro console.">
   <title>Pocket Arcade — Small games. Big nostalgia.</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b5545'/%3E%3Cpath d='M12 25h40v20H12zm8-8h24v8H20z' fill='%23c9e7b4'/%3E%3Cpath d='M21 29v12m-6-6h12' stroke='%232b5545' stroke-width='4'/%3E%3Ccircle cx='42' cy='34' r='3' fill='%232b5545'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
@@ -12,6 +12,7 @@
   <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
     <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M7 7h10l4 12h-5l-2-3h-4l-2 3H3L7 7Z"/><path d="M8 10v5m-2.5-2.5h5M16 11h.01M18 14h.01"/></symbol>
     <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-dpad-arrow" viewBox="0 0 24 24"><path d="m12 5 7 12H5Z"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
     <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
     <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4ZM17 8q5 4 0 8"/></symbol>
@@ -50,7 +51,7 @@
           <div class="console-controls">
             <div class="dpad" role="group" aria-label="Directional controls">
               <span class="dpad-center" aria-hidden="true"></span>
-              <button class="d-up" data-dir="up" aria-label="Move up">▲</button><button class="d-left" data-dir="left" aria-label="Move left">◀</button><button class="d-right" data-dir="right" aria-label="Move right">▶</button><button class="d-down" data-dir="down" aria-label="Move down">▼</button>
+              <button class="d-up" data-dir="up" aria-label="Move up"><svg aria-hidden="true" focusable="false"><use href="#i-dpad-arrow"/></svg></button><button class="d-left" data-dir="left" aria-label="Move left"><svg aria-hidden="true" focusable="false"><use href="#i-dpad-arrow"/></svg></button><button class="d-right" data-dir="right" aria-label="Move right"><svg aria-hidden="true" focusable="false"><use href="#i-dpad-arrow"/></svg></button><button class="d-down" data-dir="down" aria-label="Move down"><svg aria-hidden="true" focusable="false"><use href="#i-dpad-arrow"/></svg></button>
             </div>
             <div class="center-controls"><div class="small-buttons"><button id="restart" aria-label="Restart game"><span><svg><use href="#i-restart"/></svg></span>RESET</button><button id="pause" aria-label="Pause game" disabled><span><svg><use href="#i-pause"/></svg></span><b id="pause-label">PAUSE</b></button></div><span class="console-model">A LITTLE ESCAPE / MODEL 001</span></div>
             <div class="action-control"><button id="action" aria-label="Start or pause game">A</button><span id="action-label">START / PAUSE</span></div>
@@ -58,11 +59,12 @@
           <span class="screw screw-bl" aria-hidden="true"></span><span class="screw screw-br" aria-hidden="true"></span>
         </section>
         <aside class="library" aria-label="Game library">
-          <div class="library-heading"><h2>Pick your pixel fix.</h2><span>03 GAMES</span></div>
+          <div class="library-heading"><h2>Pick your pixel fix.</h2><span>04 GAMES</span></div>
           <div class="cartridges" role="group" aria-label="Select a game">
             <button class="cartridge selected" data-game="snake" aria-pressed="true"><span class="cartridge-art snake-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M15 45V24h29v22h17V34" fill="none" stroke="currentColor" stroke-width="10"/><rect x="54" y="29" width="14" height="13" fill="currentColor"/><rect x="61" y="31" width="3" height="3" fill="#254738"/><rect x="17" y="50" width="7" height="7" fill="#eeab6b"/></svg></span><span class="cartridge-info"><small>01 / THE HUNGRY ONE</small><strong>Snake</strong><span>Eat. Grow. Don't crash.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
             <button class="cartridge" data-game="pong" aria-pressed="false"><span class="cartridge-art pong-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M40 8v52" stroke="currentColor" stroke-width="2" stroke-dasharray="4 5" opacity=".3"/><path d="M15 13v23M65 32v23" stroke="currentColor" stroke-width="6"/><rect x="27" y="36" width="7" height="7" fill="currentColor"/></svg></span><span class="cartridge-info"><small>02 / THE RIVALRY</small><strong>Pong</strong><span>You. The CPU. First to 5.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
             <button class="cartridge" data-game="breakout" aria-pressed="false"><span class="cartridge-art breakout-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M8 14h17m6 0h17m6 0h17M8 25h17m6 0h17m6 0h17" stroke="currentColor" stroke-width="8"/><path d="M30 57h22" stroke="currentColor" stroke-width="5"/><rect x="47" y="40" width="5" height="5" fill="#fff0d3"/></svg></span><span class="cartridge-info"><small>03 / THE SATISFYING ONE</small><strong>Breakout</strong><span>Goodbye, little bricks.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
+            <button class="cartridge" data-game="airhockey" aria-pressed="false"><span class="cartridge-art airhockey-art" aria-hidden="true"><svg viewBox="0 0 80 68"><path d="M8 26V10h64v16M8 42v16h64V42M40 10v48" fill="none" stroke="currentColor" stroke-width="2" opacity=".5"/><circle cx="40" cy="34" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity=".3"/><circle cx="21" cy="39" r="9" fill="currentColor"/><circle cx="21" cy="39" r="4" fill="#254844"/><circle cx="59" cy="27" r="9" fill="#ed9b85"/><circle cx="59" cy="27" r="4" fill="#754a40"/><circle cx="40" cy="39" r="4" fill="#fff0c9"/></svg></span><span class="cartridge-info"><small>04 / THE GLIDE</small><strong>Air Hockey</strong><span>Own the rink. First to 7.</span></span><span class="cart-indicator">↗</span><span class="inserted-label">NOW INSERTED</span></button>
           </div>
           <div class="sound-settings"><button class="sound-button" id="sound" aria-pressed="true"><svg><use href="#i-sound"/></svg><span>Sound on</span></button></div>
           <div class="quick-guide"><div class="guide-heading"><span>THE QUICK HOW-TO</span><button id="help" aria-label="Open game instructions">?</button></div><p id="game-instructions">Chase the snacks. Avoid the walls<br>and your ever-growing tail.</p><div id="control-hint" class="control-hint"><span class="key-cluster"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>or <b>W A S D</b> to move</span></div><div class="control-hint pause-hint"><kbd>SPACE</kbd><span>to pause / resume</span></div><div class="touch-hint">On your phone? Use the D-pad below.</div></div>
