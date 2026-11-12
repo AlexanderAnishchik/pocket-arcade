@@ -505,5 +505,268 @@
     };
   }
 
-  window.RetroGames = { snake: { create: snake }, pong: { create: pong }, breakout: { create: breakout }, airhockey: { create: airhockey } };
+  function shuffleboard(api) {
+    const table = { left: 48, right: 674, top: 110, bottom: 324 };
+    const zones = [470, 538, 606], radius = 11, friction = 230, chargeSeconds = 1.65;
+    const origin = { x: 94, y: 217 }, maxAngle = .28, pucksPerRound = 4, rounds = 3;
+    const colors = { player: palette.cyan, cpu: '#ed9b85' }, fx = particles();
+    let pucks, used, totals, round, turn, stage, charging, power, aim, ended;
+    let timer, settled, cpuPlan, roundResult, lastShot, nextId, lastControls;
+    const distanceFor = value => 65 + value * 720;
+    const powerFor = distance => clamp((distance - 65) / 720, 0, 1);
+
+    function pointsFor(puck) {
+      const epsilon = 1e-6;
+      if (puck.out || puck.x + radius > table.right + epsilon || puck.x - radius < table.left - epsilon ||
+          puck.y - radius < table.top - epsilon || puck.y + radius > table.bottom + epsilon) return 0;
+      // The whole puck must cross a scoring line to earn the higher zone.
+      for (let i = zones.length - 1; i >= 0; i--) if (puck.x - radius >= zones[i] - epsilon) return i + 1;
+      return 0;
+    }
+    function tableScore() {
+      const result = { player: 0, cpu: 0 };
+      for (const puck of pucks) result[puck.owner] += pointsFor(puck);
+      return result;
+    }
+    function updateControls() {
+      const canShoot = !ended && stage === 'aiming' && turn === 'player';
+      const value = Math.round(power * 100);
+      const label = ended ? 'Match complete' : stage === 'roundOver' ? 'Next round soon' :
+        stage === 'sliding' ? 'Pucks in motion' : turn === 'cpu' ? 'CPU is aiming…' :
+        charging ? 'Release · ' + value + '%' : 'Hold to shoot';
+      const signature = [canShoot, charging, value, label].join(':');
+      if (signature !== lastControls) {
+        lastControls = signature;
+        api.shot?.({ canShoot, charging, power: value, label });
+      }
+    }
+    function status() {
+      api.status('YOU ' + totals.player + ' : ' + totals.cpu + ' CPU');
+      updateControls();
+    }
+    function planCPU() {
+      const opponents = pucks.filter(p => p.owner === 'player' && pointsFor(p) > 0);
+      let target = { x: random(575, 647), y: random(153, 281) };
+      let extra = 0;
+      if (opponents.length && Math.random() < .42) {
+        target = opponents[Math.floor(Math.random() * opponents.length)];
+        extra = random(48, 100);
+      } else {
+        // Prefer an open lane, with a little imperfect judgement.
+        for (let attempt = 0; attempt < 5; attempt++) {
+          if (!pucks.some(p => !p.out && Math.hypot(target.x - p.x, target.y - p.y) < 36)) break;
+          target = { x: random(575, 647), y: random(153, 281) };
+        }
+      }
+      return { angle: clamp(Math.atan2(target.y - origin.y, target.x - origin.x), -maxAngle, maxAngle),
+        power: powerFor(Math.hypot(target.x - origin.x, target.y - origin.y) + extra) };
+    }
+    function beginTurn(owner) {
+      turn = owner; stage = 'aiming'; timer = settled = power = 0; charging = false;
+      cpuPlan = owner === 'cpu' ? planCPU() : null;
+      status();
+    }
+    function beginRound() {
+      pucks = []; used = { player: 0, cpu: 0 }; roundResult = null; aim = 0;
+      beginTurn(round % 2 ? 'player' : 'cpu');
+    }
+    function launch(owner, strength, angle) {
+      const distance = distanceFor(strength) * random(.94, 1.06);
+      // Powerful shots trade accuracy for reach, for both the player and CPU.
+      const spread = .008 + .065 * strength * strength;
+      const heading = angle + random(-spread, spread), speed = Math.sqrt(2 * friction * distance);
+      const puck = { id: nextId++, owner, x: origin.x, y: origin.y,
+        vx: Math.cos(heading) * speed, vy: Math.sin(heading) * speed,
+        drag: friction * random(.97, 1.03), curl: random(-.012, .012), out: false };
+      pucks.push(puck); used[owner]++; lastShot = { owner, power: strength, angle: heading, speed };
+      stage = 'sliding'; charging = false; power = 0; settled = 0;
+      beep(api, owner === 'player' ? 430 : 300, .07, 'triangle'); updateControls();
+    }
+    function finishRound() {
+      roundResult = tableScore();
+      totals.player += roundResult.player; totals.cpu += roundResult.cpu;
+      api.score(totals.player);
+      if (round >= rounds && totals.player !== totals.cpu) {
+        ended = true; stage = 'over'; status();
+        const won = totals.player > totals.cpu;
+        api.finish(won, (won ? 'You take the table! ' : 'The CPU takes the table. ') +
+          totals.player + '–' + totals.cpu + ' after ' + round + ' rounds.');
+      } else {
+        stage = 'roundOver'; timer = 2.8; status();
+        beep(api, roundResult.player >= roundResult.cpu ? 660 : 190, .15, 'triangle');
+      }
+    }
+    function collide(a, b) {
+      const dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy);
+      if (distance >= radius * 2) return;
+      const nx = distance > .001 ? dx / distance : 1, ny = distance > .001 ? dy / distance : 0;
+      const overlap = (radius * 2 - distance + .01) / 2;
+      a.x -= nx * overlap; a.y -= ny * overlap; b.x += nx * overlap; b.y += ny * overlap;
+      const approach = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+      if (approach <= 0) return;
+      const impulse = approach * .94;
+      a.vx -= impulse * nx; a.vy -= impulse * ny; b.vx += impulse * nx; b.vy += impulse * ny;
+      if (approach > 35) { fx.burst((a.x + b.x) / 2, (a.y + b.y) / 2, '#ffe2aa', 6); beep(api, 720, .035, 'triangle'); }
+    }
+    function fall(puck) {
+      if (puck.out) return;
+      if (puck.x < table.left || puck.x > table.right || puck.y < table.top || puck.y > table.bottom) {
+        puck.out = true; puck.vx = puck.vy = 0;
+        fx.burst(puck.x, puck.y, colors[puck.owner], 10); beep(api, 140, .07, 'triangle');
+      }
+    }
+    function physics(dt) {
+      const steps = Math.ceil(dt * 240), step = dt / steps;
+      for (let i = 0; i < steps; i++) {
+        for (const puck of pucks) {
+          if (puck.out) continue;
+          const speed = Math.hypot(puck.vx, puck.vy);
+          if (speed > 0) {
+            const next = Math.max(0, speed - puck.drag * step);
+            const heading = Math.atan2(puck.vy, puck.vx) + puck.curl * step;
+            const travel = (speed + next) / 2 * Math.min(step, speed / puck.drag);
+            puck.x += Math.cos(heading) * travel; puck.y += Math.sin(heading) * travel;
+            puck.vx = Math.cos(heading) * next; puck.vy = Math.sin(heading) * next;
+          }
+          fall(puck);
+        }
+        for (let a = 0; a < pucks.length; a++) for (let b = a + 1; b < pucks.length; b++) {
+          if (!pucks[a].out && !pucks[b].out) collide(pucks[a], pucks[b]);
+        }
+        for (const puck of pucks) fall(puck);
+      }
+    }
+    function circle(ctx, x, y, size, fill) {
+      ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill();
+    }
+    function drawPuck(ctx, puck, ghost = false) {
+      if (puck.out) return;
+      ctx.globalAlpha = ghost ? .65 : 1;
+      circle(ctx, puck.x, puck.y + 3, radius + 1, '#07161180');
+      circle(ctx, puck.x, puck.y, radius, colors[puck.owner]);
+      circle(ctx, puck.x, puck.y, radius - 4, puck.owner === 'player' ? '#33786d' : '#935845');
+      circle(ctx, puck.x - 3, puck.y - 4, 2.5, '#ffffffb0');
+      const points = ghost ? 0 : pointsFor(puck);
+      if (points && !puck.vx && !puck.vy) {
+        ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff8e7';
+        ctx.fillText(points, puck.x, puck.y + 4);
+      }
+      ctx.globalAlpha = 1;
+    }
+    return {
+      reset() {
+        totals = { player: 0, cpu: 0 }; round = 1; nextId = 1; ended = false;
+        lastShot = null; lastControls = ''; fx.clear(); api.score(0); beginRound();
+      },
+      beginShot() {
+        if (ended || stage !== 'aiming' || turn !== 'player' || charging) return false;
+        charging = true; power = 0; updateControls(); return true;
+      },
+      releaseShot() {
+        if (charging && !ended && stage === 'aiming' && turn === 'player') launch('player', power, aim);
+      },
+      releaseInput() { charging = false; power = 0; updateControls(); },
+      releasePointer() {},
+      direction(dir) {
+        if (stage === 'aiming' && turn === 'player') aim = clamp(aim + (dir === 'up' || dir === 'left' ? -.018 : .018), -maxAngle, maxAngle);
+      },
+      pointer(x, y) {
+        if (!Number.isFinite(x) || !Number.isFinite(y) || stage !== 'aiming' || turn !== 'player') return;
+        aim = clamp(Math.atan2(y - origin.y, Math.max(200, x - origin.x)), -maxAngle, maxAngle);
+      },
+      update(dt, input = new Set()) {
+        if (ended || !Number.isFinite(dt) || dt <= 0) return;
+        dt = Math.min(dt, .05); fx.update(dt);
+        if (stage === 'aiming') {
+          if (turn === 'player') {
+            const direction = Number(input.has('down') || input.has('right')) - Number(input.has('up') || input.has('left'));
+            aim = clamp(aim + direction * .32 * dt, -maxAngle, maxAngle);
+            if (charging) power = Math.min(1, power + dt / chargeSeconds);
+          } else {
+            timer += dt; power = cpuPlan.power * clamp((timer - .35) / .95, 0, 1);
+            if (timer >= 1.3) launch('cpu', cpuPlan.power, cpuPlan.angle);
+          }
+        } else if (stage === 'sliding') {
+          physics(dt);
+          if (pucks.every(p => p.out || (!p.vx && !p.vy))) settled += dt;
+          else settled = 0;
+          if (settled >= .65) {
+            if (used.player === pucksPerRound && used.cpu === pucksPerRound) finishRound();
+            else beginTurn(turn === 'player' ? 'cpu' : 'player');
+          }
+        } else if (stage === 'roundOver') {
+          timer -= dt;
+          if (timer <= 0) { round++; beginRound(); }
+        }
+        updateControls();
+      },
+      draw(ctx) {
+        background(ctx, 24);
+        ctx.textAlign = 'left'; ctx.font = 'bold 23px monospace'; ctx.fillStyle = colors.player;
+        ctx.fillText('YOU ' + totals.player, 45, 37);
+        ctx.textAlign = 'right'; ctx.fillStyle = colors.cpu; ctx.fillText('CPU ' + totals.cpu, 675, 37);
+        ctx.textAlign = 'center'; ctx.font = 'bold 16px monospace'; ctx.fillStyle = '#dfd7b9';
+        ctx.fillText(round > rounds ? 'TIEBREAK ' + (round - rounds) : 'ROUND ' + round + ' / ' + rounds, W / 2, 35);
+        for (let i = 0; i < pucksPerRound; i++) {
+          circle(ctx, 54 + i * 23, 60, 6, i < used.player ? '#2b4942' : colors.player);
+          circle(ctx, 666 - i * 23, 60, 6, i < used.cpu ? '#4a3730' : colors.cpu);
+        }
+        ctx.font = '12px monospace'; ctx.fillStyle = '#97a996'; ctx.fillText('4 PUCKS EACH · 1 vs CPU', W / 2, 62);
+        // A warm wooden table inset into the arcade's dark screen.
+        ctx.fillStyle = '#09110e'; ctx.fillRect(29, 90, 664, 254);
+        ctx.fillStyle = '#574634'; ctx.fillRect(36, 98, 650, 238);
+        ctx.fillStyle = '#b69a67'; ctx.fillRect(table.left, table.top, table.right - table.left, table.bottom - table.top);
+        for (let y = table.top; y < table.bottom; y += 36) {
+          ctx.fillStyle = y % 72 < 36 ? '#ffffff09' : '#51321c0a'; ctx.fillRect(table.left, y, table.right - table.left, 36);
+          ctx.fillStyle = '#674a2b22'; ctx.fillRect(table.left, y, table.right - table.left, 1);
+        }
+        for (let i = 0; i < zones.length; i++) {
+          const x = zones[i], end = zones[i + 1] || table.right;
+          ctx.fillStyle = ['#254a3b22', '#254a3b38', '#254a3b55'][i]; ctx.fillRect(x, table.top, end - x, table.bottom - table.top);
+          ctx.fillStyle = '#31483bbc'; ctx.fillRect(x, table.top, 2, table.bottom - table.top);
+          ctx.textAlign = 'center'; ctx.font = 'bold 33px monospace'; ctx.fillStyle = '#213e30c0';
+          ctx.fillText(i + 1, (x + end) / 2, 150); ctx.fillText(i + 1, (x + end) / 2, 307);
+        }
+        ctx.strokeStyle = '#654e2e66'; ctx.lineWidth = 1; ctx.setLineDash([3, 7]);
+        ctx.beginPath(); ctx.moveTo(151, table.top + 10); ctx.lineTo(151, table.bottom - 10); ctx.stroke(); ctx.setLineDash([]);
+        ctx.textAlign = 'center'; ctx.font = '12px monospace'; ctx.fillStyle = '#5a472c'; ctx.fillText('SLIDE →', 265, 137);
+        if (stage === 'aiming' && !ended) {
+          const angle = turn === 'player' ? aim : cpuPlan.angle;
+          const length = charging || turn === 'cpu' ? distanceFor(power) : 115;
+          const x = origin.x + Math.cos(angle) * length, y = origin.y + Math.sin(angle) * length;
+          ctx.save(); ctx.beginPath(); ctx.rect(table.left, table.top, table.right - table.left, table.bottom - table.top); ctx.clip();
+          ctx.strokeStyle = '#244f45b0'; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
+          ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(x, y); ctx.stroke();
+          ctx.beginPath(); ctx.arc(x, y, radius + 3, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+          drawPuck(ctx, { ...origin, owner: turn }, true);
+        }
+        for (const puck of pucks) drawPuck(ctx, puck);
+        fx.draw(ctx);
+        ctx.textAlign = 'center'; ctx.font = 'bold 18px monospace'; ctx.fillStyle = '#dfe8cf';
+        const message = stage === 'roundOver' ? 'ROUND ' + round + ': YOU +' + roundResult.player + ' · CPU +' + roundResult.cpu :
+          stage === 'sliding' ? (turn === 'player' ? 'YOUR' : 'CPU') + ' PUCK · LET IT GLIDE' :
+          turn === 'cpu' ? 'CPU IS LINING UP A SHOT' : charging ? 'RELEASE TO SLIDE · ' + Math.round(power * 100) + '%' : 'YOUR TURN · HOLD SPACE, THEN RELEASE';
+        ctx.fillText(message, W / 2, 369);
+        const meterX = 102, meterY = 386, meterW = 516;
+        ctx.fillStyle = '#273b31'; ctx.fillRect(meterX, meterY, meterW, 16);
+        ctx.fillStyle = power > .83 ? '#ed9b85' : power > .68 ? '#ffd28a' : colors[turn];
+        ctx.fillRect(meterX, meterY, meterW * power, 16);
+        for (const zone of zones) {
+          ctx.fillStyle = '#e7ebcb66'; ctx.fillRect(meterX + powerFor(zone + radius - origin.x) * meterW, meterY, 2, 16);
+        }
+        ctx.font = '11px monospace'; ctx.fillStyle = '#a1b19b'; ctx.textAlign = 'left'; ctx.fillText('SOFT', meterX, 417);
+        ctx.textAlign = 'right'; ctx.fillText('STRONG', meterX + meterW, 417);
+        ctx.textAlign = 'center'; ctx.fillText(stage === 'roundOver' ? (round >= rounds ? 'TIED! EXTRA ROUND COMING…' : 'NEXT ROUND COMING…') :
+          '↑ ↓ AIM · MORE POWER = MORE RANDOM DIRECTION', W / 2, 439);
+      },
+      inspect() {
+        return { type: 'shuffleboard', pucks: pucks.map(p => ({ ...p, points: pointsFor(p) })),
+          used: { ...used }, totals: { ...totals }, tableScore: tableScore(), round, turn, stage,
+          charging, power, aim, ended, timer, roundResult: roundResult && { ...roundResult },
+          lastShot: lastShot && { ...lastShot }, table: { ...table }, zones: [...zones], radius, chargeSeconds, pucksPerRound, rounds };
+      }
+    };
+  }
+
+  window.RetroGames = { snake: { create: snake }, pong: { create: pong }, breakout: { create: breakout }, airhockey: { create: airhockey }, shuffleboard: { create: shuffleboard } };
 })();

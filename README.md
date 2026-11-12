@@ -1,6 +1,6 @@
 # Pocket Arcade — Codex project guide
 
-A browser-based retro console with original Snake, Pong, Breakout, and Air Hockey games.
+A browser-based retro console with original Snake, Pong, Breakout, Air Hockey, and Shuffleboard games.
 
 ## Project and deployment identity
 
@@ -25,7 +25,7 @@ arcade-game/
 │   ├── index.html       Console, game selection, overlays, buttons, SVG icons
 │   ├── styles.css       Responsive console styling and fullscreen presentation
 │   ├── app.js           Input, game lifecycle, sound, preferences, fullscreen
-│   └── games.js         Snake, Pong, Breakout, Air Hockey engines and canvas rendering
+│   └── games.js         Five game engines and canvas rendering
 └── README.md            This guide
 ```
 
@@ -49,13 +49,13 @@ node --check dist/app.js
 node --check dist/games.js
 ```
 
-Air Hockey has a dependency-free regression suite using Node's built-in test runner:
+Air Hockey and Shuffleboard have dependency-free regression suites using Node's built-in test runner:
 
 ```powershell
-node --test tests/airhockey.test.cjs
+node --test
 ```
 
-It checks movement, pointer release, rink boundaries, and complete winning/losing matches at 30, 60, and 144 fps. Also verify affected behavior in the browser. Do not add a test framework for small presentation changes.
+The suites check movement, charge/release, cancellation, random variation, collisions, scoring boundaries, and complete matches at 30, 60, and 144 fps. Also verify affected behavior in the browser. Do not add a test framework for small presentation changes.
 
 ## Application conventions
 
@@ -64,14 +64,16 @@ It checks movement, pointer release, rink boundaries, and complete winning/losin
 - Best scores and preferences use browser-local storage with the `pocket-arcade-` prefix. No backend database is required.
 - Sound defaults to on when there is no saved preference. A saved off preference is respected. Audio is unlocked by a player interaction; do not rely on page-load autoplay.
 - Keep the labeled **Full screen** button above the game inside `#display`. It changes to **Exit full screen** through `fullscreenchange`, including when the browser exits fullscreen. Unsupported browsers hide the toolbar.
-- Arrow keys or WASD move; Enter starts/resumes; Space or P pauses/resumes; Escape pauses; R restarts. Buttons remain keyboard accessible.
+- Arrow keys or WASD move; Enter starts/resumes; Space or P pauses/resumes; Escape pauses; R restarts. In Shuffleboard, hold Space to charge and release to shoot; P or Escape pauses. Buttons remain keyboard accessible.
 - Mobile players can use the D-pad, swipe Snake, drag the Pong/Breakout paddle, or drag the Air Hockey mallet in two dimensions.
 - Air Hockey is a first-to-seven match against the CPU. The mint player mallet stays in the left half; the coral CPU mallet stays in the right half. Arrow keys/WASD, mouse movement, touch drag, and the D-pad move the mallet. A goal counts when the entire puck crosses the goal line. A short face-off follows each goal; best scores store goals scored in a match.
+- Shuffleboard is a three-round match against the CPU with four pucks each per round, alternating turns and alternating who goes first each round. Aim using arrows/WASD, the D-pad, or a drag on the table. Hold Space or the round console action button, then release to launch. A longer hold increases distance; power reaches its maximum after 1.65 seconds and stays there until release. Shots include small random strength variations and gentle drift. Direction spread increases with power: softer shots are more accurate and stronger shots are less predictable. The dotted path is an estimate. Pucks collide and can fall off any edge. All fully supported pucks score 1, 2, or 3 at round end; the entire puck must cross a line to earn the higher value. Short shots and overhanging/off-table pucks score zero. Tied totals after round three trigger additional rounds until someone wins. Best scores store the player's total points. Fullscreen uses Space to shoot and arrows or dragging to aim.
+- Canceling a pointer, pausing, switching games, or losing focus cancels an unfinished Shuffleboard charge without spending a puck. Releasing an aiming drag does not cancel a shot being charged with another finger. Keyboard users can hold Space or Enter while a shot button is focused; assistive clicks can start and finish a charge with two activations.
 - Pause on focus loss or when the page becomes hidden. Preserve scores and state on pause; restart deliberately resets the round.
 
 ### Game engine boundary
 
-`games.js` defines `window.RetroGames` with `snake`, `pong`, `breakout`, and `airhockey`. Each game exposes `create(api)`, returning `reset()`, `update(dt, input)`, `draw(ctx)`, directional/action/pointer handlers, and `inspect()` for inspection. The optional `releaseInput()` clears a pointer target when a drag ends or the game changes phase.
+`games.js` defines `window.RetroGames` with `snake`, `pong`, `breakout`, `airhockey`, and `shuffleboard`. Each game exposes `create(api)`, returning `reset()`, `update(dt, input)`, `draw(ctx)`, applicable directional/action/pointer handlers, and `inspect()` for inspection. The optional `releaseInput()` clears pending input when the game changes phase. A drag ending calls `releasePointer()` when supplied, otherwise `releaseInput()`. Shuffleboard exposes `beginShot()` and `releaseShot()` and reports button state through the optional `api.shot({ canShoot, charging, power, label })` callback. Its `releaseInput()` cancels a charge without firing.
 
 The shared canvas coordinates are **720 × 450**. `dt` is seconds. Input is a set of held `left`, `right`, `up`, and `down` directions. The app supplies `score(number)`, `status(string)`, `finish(won, message)`, and `beep(frequency, duration, type)` callbacks. Keep game engines free of DOM event listeners and independent timers; the app owns the animation loop.
 

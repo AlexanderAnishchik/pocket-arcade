@@ -7,6 +7,16 @@
 @media(max-width:440px){.screen-hud span{font-size:8px}.screen-hud strong{font-size:16px}.hud-game span{font-size:9px}.hud-game small{font-size:7px;letter-spacing:.7px}.overlay-kicker{font-size:6px}.overlay-content p{font-size:10px}.start-hint{font-size:6px}.dpad{width:120px;height:120px;transform:none;margin-right:0}.dpad button,.dpad-center{width:40px;height:40px}.dpad-center{left:40px;top:40px}.dpad-center:after{margin:10px}.d-up{left:40px}.d-left,.d-right{top:40px}.d-down{left:40px}.small-buttons{gap:6px}.small-buttons button{font-size:7px}.console-model{font-size:5px;max-width:94px;line-height:1.8;margin-top:13px}.action-control{margin:0 4px 0 6px}.quick-guide{display:block}.quick-guide p{font-size:12px}.control-hint{font-size:10px;margin:12px 0}.control-hint b{font-size:9px}.control-hint kbd{font-size:11px;padding:3px 6px}.touch-hint{font-size:10px;line-height:1.6}.guide-heading{font-size:9px}.guide-heading button{width:28px;height:28px}.screen-bottom>span{font-size:6px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 .pause-hint{grid-column:1/-1;margin:10px 0}
+.shuffleboard-art{background:#574b36;color:#dfc38b}
+.cartridge[data-game="shuffleboard"] .cartridge-info strong{font-size:21px}
+canvas[data-game="shuffleboard"]{cursor:crosshair}
+canvas[data-game="shuffleboard"]~.game-overlay h2{font-size:clamp(20px,2.7vw,35px);letter-spacing:2px}
+.action-control button.held{transform:translateY(4px);box-shadow:0 1px #874f3a,0 3px 0 7px #bdc4ad}
+#display:has(canvas[data-game="shuffleboard"]) .hud-game span{letter-spacing:1px}
+@media(max-width:1050px){.cartridge[data-game="shuffleboard"] .cartridge-info strong{font-size:18px}}
+@media(max-width:800px){.cartridges:has([data-game="shuffleboard"]){grid-template-columns:repeat(6,minmax(0,1fr))}.cartridges:has([data-game="shuffleboard"]) .cartridge{grid-column:span 2}.cartridges:has([data-game="shuffleboard"]) .cartridge:nth-last-child(-n+2){grid-column:span 3}}
+@media(max-width:440px){.cartridges:has([data-game="shuffleboard"]){grid-template-columns:repeat(2,minmax(0,1fr))}.cartridges:has([data-game="shuffleboard"]) .cartridge{grid-column:auto}.cartridges:has([data-game="shuffleboard"]) .cartridge:nth-last-child(2){grid-column:auto}.cartridges:has([data-game="shuffleboard"]) .cartridge:last-child{grid-column:1/-1}.cartridge[data-game="shuffleboard"] .cartridge-info strong{font-size:18px}canvas[data-game="shuffleboard"]~.game-overlay h2{font-size:22px;letter-spacing:1px}#display:has(canvas[data-game="shuffleboard"]) .hud-game span{font-size:8px;letter-spacing:0}#display:has(canvas[data-game="shuffleboard"]) .hud-game small{font-size:6px;letter-spacing:0}}
+@media(max-width:360px){canvas[data-game="shuffleboard"]~.game-overlay .pixel-mark,canvas[data-game="shuffleboard"]~.game-overlay .start-hint{display:none}canvas[data-game="shuffleboard"]~.game-overlay h2{font-size:19px;margin-top:8px}canvas[data-game="shuffleboard"]~.game-overlay p{line-height:1.4;margin-bottom:8px}}
 .airhockey-art{background:#254844;color:#a5ddd5}
 canvas[data-game="airhockey"]{cursor:crosshair}
 canvas[data-game="airhockey"]~.game-overlay h2{font-size:clamp(24px,3.3vw,40px);letter-spacing:3px}
