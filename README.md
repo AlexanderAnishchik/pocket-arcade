@@ -8,7 +8,7 @@ A browser-based retro console with original Snake, Pong, Breakout, Air Hockey, a
 - **Sites project ID:** `appgprj_6ad22f71c3c88191a7ed556e66311441`
 - **Source branch:** `main` (use the branch returned by Sites repository access if it changes).
 - **Hosting manifest:** `.openai/hosting.json`
-- **Static directory:** `dist`
+- **Static directory:** `build`
 
 This repository is already connected to the existing Pocket Arcade Site. Reuse its project ID. Do not call `create_site`, create another Site, replace the manifest identity, or change sharing to deploy an update. Always read the current access configuration before choosing a deployment tool. The Site was public when last checked on 28 October 2026; preserve its current audience.
 
@@ -16,51 +16,37 @@ For Codex: run project commands with this directory as the explicit `workdir`. I
 
 ## Source layout
 
-```text
-arcade-game/
-├── .git/                 Git history and Sites source repository configuration
-├── .openai/
-│   └── hosting.json      Existing Site identity and static hosting configuration
-├── dist/
-│   ├── index.html       Console, game selection, overlays, buttons, SVG icons
-│   ├── styles.css       Responsive console styling and fullscreen presentation
-│   ├── app.js           Input, game lifecycle, sound, preferences, fullscreen
-│   └── games.js         Five game engines and canvas rendering
-└── README.md            This guide
-```
+- `src/App.jsx` and `src/GameLibrary.jsx` render the React console, cartridge library, and help.
+- `src/session.js` handles input, the game lifecycle, the canvas animation loop, sound, storage, and fullscreen.
+- `src/games.js` contains the five canvas game engines.
+- `src/styles.css` defines the responsive console and fullscreen layout.
+- `tests/` contains the Vitest unit and React component suites.
 
-`dist` is the hand-written application source and the published static directory. It is not generated output. There is no package installation, framework, bundler, or build step. The hosted version loads Google Fonts; system font fallbacks are defined.
+Vite generates the static site in `build/`, which is ignored by Git. The site loads Google Fonts with system font fallbacks.
 
 ## Local development
 
-From PowerShell:
+Use Node.js 20.19+ or 22.12+ and run these commands from the repository root in PowerShell.
 
 ```powershell
-Set-Location -LiteralPath 'D:\Study\arcade-game'
-python -m http.server 4173 --bind 127.0.0.1 --directory dist
+npm.cmd ci
+npm.cmd run dev
 ```
 
-Open http://127.0.0.1:4173. Keep the server running while testing, and stop it with Ctrl+C afterward. If `python` is unavailable, use the Python executable returned by Codex's `load_workspace_dependencies` tool. Local preview may require network permission in a sandbox.
-
-Syntax checks, using Node.js or the bundled Node executable:
+Open the local URL printed by Vite. Stop the server with Ctrl+C.
 
 ```powershell
-node --check dist/app.js
-node --check dist/games.js
+npm.cmd test
+npm.cmd run build
+npm.cmd run preview
 ```
 
-Air Hockey and Shuffleboard have dependency-free regression suites using Node's built-in test runner:
-
-```powershell
-node --test
-```
-
-The suites check movement, charge/release, cancellation, random variation, collisions, scoring boundaries, and complete matches at 30, 60, and 144 fps. Also verify affected behavior in the browser. Do not add a test framework for small presentation changes.
+Use `npm.cmd run test:watch` to rerun tests as you edit. The engine tests use seeded or fixed randomness and exercise all five games, including complete Air Hockey and Shuffleboard matches at 30, 60, and 144 fps. The React tests cover game selection, controls, saved preferences, score updates, and cleanup.
 
 ## Application conventions
 
 - Preserve the cream console, dark screen, cartridge colors, pixel-inspired graphics, and responsive layout.
-- Game selection, scores, best scores, start, pause, restart, sound, touch controls, and fullscreen are coordinated in `app.js`.
+- Game selection, scores, best scores, start, pause, restart, sound, touch controls, and fullscreen are coordinated by the React UI and `src/session.js`.
 - Best scores and preferences use browser-local storage with the `pocket-arcade-` prefix. No backend database is required.
 - Sound defaults to on when there is no saved preference. A saved off preference is respected. Audio is unlocked by a player interaction; do not rely on page-load autoplay.
 - Keep the labeled **Full screen** button above the game inside `#display`. It changes to **Exit full screen** through `fullscreenchange`, including when the browser exits fullscreen. Unsupported browsers hide the toolbar.
@@ -73,7 +59,7 @@ The suites check movement, charge/release, cancellation, random variation, colli
 
 ### Game engine boundary
 
-`games.js` defines `window.RetroGames` with `snake`, `pong`, `breakout`, `airhockey`, and `shuffleboard`. Each game exposes `create(api)`, returning `reset()`, `update(dt, input)`, `draw(ctx)`, applicable directional/action/pointer handlers, and `inspect()` for inspection. The optional `releaseInput()` clears pending input when the game changes phase. A drag ending calls `releasePointer()` when supplied, otherwise `releaseInput()`. Shuffleboard exposes `beginShot()` and `releaseShot()` and reports button state through the optional `api.shot({ canShoot, charging, power, label })` callback. Its `releaseInput()` cancels a charge without firing.
+`src/games.js` exports `snake`, `pong`, `breakout`, `airhockey`, and `shuffleboard`. Each factory accepts `(api, rng = Math.random)` and returns `reset()`, `update(dt, input)`, `draw(ctx)`, applicable directional/action/pointer handlers, and `inspect()` for inspection. The optional `releaseInput()` clears pending input when the game changes phase. A drag ending calls `releasePointer()` when supplied, otherwise `releaseInput()`. Shuffleboard exposes `beginShot()` and `releaseShot()` and reports button state through the optional `api.shot({ canShoot, charging, power, label })` callback. Its `releaseInput()` cancels a charge without firing.
 
 The shared canvas coordinates are **720 × 450**. `dt` is seconds. Input is a set of held `left`, `right`, `up`, and `down` directions. The app supplies `score(number)`, `status(string)`, `finish(won, message)`, and `beep(frequency, duration, type)` callbacks. Keep game engines free of DOM event listeners and independent timers; the app owns the animation loop.
 
@@ -117,7 +103,7 @@ The helper waits for hidden JSON on stdin. In Codex, deliver it with `write_stdi
 
 ### 3. Implement, verify, package
 
-1. Make the requested changes in `dist/` and run appropriate checks.
+1. Make the requested changes in `src/`, then run `npm.cmd ci`, `npm.cmd test`, and `npm.cmd run build`. Confirm the output contains `build/index.html` and its assets.
 2. For UI changes, follow the Sites skill's local preview instructions. Confirm the local server responds before opening it. Check desktop and narrow/mobile layouts; test any behavior you changed. For fullscreen changes, check enter, exit, keyboard activation, and label synchronization.
 3. Launch the source helper again from the returned checkout path with the same Windows environment setup.
 4. After the hidden-input prompt, send this payload using actual in-memory objects:
@@ -131,7 +117,7 @@ The helper waits for hidden JSON on stdin. In Codex, deliver it with `write_stdi
 }
 ```
 
-`commands: []` is appropriate when applicable checks have already passed and inputs have not changed. Otherwise provide remaining checks as ordered argument arrays. No build is required for this static app. Keep the archive outside the repository so it cannot be committed accidentally.
+`commands: []` is appropriate when applicable checks have already passed and inputs have not changed. Otherwise provide remaining checks and the Vite production build as ordered argument arrays. Keep the archive outside the repository so it cannot be committed accidentally.
 
 The helper owns source staging, commit/push, and archive packaging. Wait for successful completion and retain its exact `project_id`, `commit_sha`, and `archive` values. Do not modify the archive or source between packaging and saving the version.
 

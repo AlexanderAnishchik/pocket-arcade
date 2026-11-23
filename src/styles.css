@@ -41,3 +41,4 @@ canvas[data-game="airhockey"]~.game-overlay h2{font-size:clamp(24px,3.3vw,40px);
 #display:fullscreen .display-toolbar{padding:12px 24px}
 #display:fullscreen .screen-hud,#display:fullscreen .screen-bottom{flex-shrink:0}
 @media(max-width:440px){.display-toolbar{padding:10px;gap:8px}.display-toolbar>span{font-size:10px;max-width:100px}#fullscreen{padding:10px 12px;font-size:12px;gap:7px}#fullscreen svg{width:17px;height:17px}#display:fullscreen .display-toolbar{padding:10px 14px}}
+.overlay-content p, #game-instructions { white-space: pre-line; }

@@ -1,23 +1,15 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-const { test } = require('node:test');
-const source = readFileSync(path.join(__dirname, '../dist/games.js'), 'utf8');
+import assert from 'node:assert/strict';
+import { test } from 'vitest';
+import { shuffleboard } from '../src/games.js';
 
 function createGame(seed = 42, fixed = false) {
-  const math = Object.create(Math);
-  math.random = fixed ? () => .5 : () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  const context = { window: {}, Math: math };
-  vm.runInNewContext(source, context);
+  const rng = fixed ? () => .5 : () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
   const events = { scores: [], finishes: [], controls: [] };
-  const game = context.window.RetroGames.shuffleboard.create({
+  const game = shuffleboard({
     score: value => events.scores.push(value), status() {}, beep() {},
     finish: (won, message) => events.finishes.push({ won, message }),
     shot: state => events.controls.push(state)
-  });
+  }, rng);
   game.reset();
   return { game, events };
 }

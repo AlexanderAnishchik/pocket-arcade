@@ -1,24 +1,16 @@
-'use strict';
-
-const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-const { test } = require('node:test');
-const source = readFileSync(path.join(__dirname, '../dist/games.js'), 'utf8');
+import assert from 'node:assert/strict';
+import { test } from 'vitest';
+import { airhockey } from '../src/games.js';
 
 function createGame(seed = 42) {
-  const math = Object.create(Math);
-  math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  const context = { window: {}, Math: math };
-  vm.runInNewContext(source, context);
+  const rng = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
   const events = { scores: [], statuses: [], finishes: [] };
-  const game = context.window.RetroGames.airhockey.create({
+  const game = airhockey({
     score: value => events.scores.push(value),
     status: value => events.statuses.push(value),
     finish: (won, message) => events.finishes.push({ won, message }),
     beep() {}
-  });
+  }, rng);
   game.reset();
   return { game, events };
 }

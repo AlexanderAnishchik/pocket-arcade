@@ -1,2 +1,4 @@
 # Local browser testing output.
 .playwright-mcp/
+node_modules/
+build/
