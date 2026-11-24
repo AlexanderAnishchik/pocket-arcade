@@ -1,4 +1,4 @@
-import { catalog } from './catalog.js';
+import { catalog, initialGameId } from './catalog.js';
 import * as games from './games.js';
 
 const storagePrefix = 'pocket-arcade-';
@@ -9,7 +9,7 @@ const keyMap = {
 const normalizeKey = key => key.length === 1 ? key.toLowerCase() : key;
 const interactive = 'button,a,input,textarea,select';
 
-export function readPreference(key, fallback) {
+function readPreference(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(storagePrefix + key)) ?? fallback;
   } catch {
@@ -34,7 +34,7 @@ export function createSession({ canvas, display, dialog, actionButton, publish }
   }));
   const keysDown = new Set();
   const directionPointers = new Map();
-  let active = 'snake';
+  let active = initialGameId;
   let phase = 'ready';
   let game;
   let currentScore = 0;
@@ -182,10 +182,10 @@ export function createSession({ canvas, display, dialog, actionButton, publish }
       if (!event.repeat) beginShot('key:' + key, onAction);
       return;
     }
-    if (dir) {
+    if (dir && phase === 'running') {
       event.preventDefault();
       keysDown.add(key);
-      if (phase === 'running' && !event.repeat) game.direction?.(dir);
+      if (!event.repeat) game.direction?.(dir);
       return;
     }
     if (event.repeat) return;
@@ -258,6 +258,7 @@ export function createSession({ canvas, display, dialog, actionButton, publish }
     const rect = canvas.getBoundingClientRect();
     const scale = Math.min(rect.width / canvas.width, rect.height / canvas.height);
     if (scale <= 0) return;
+    // Fullscreen can leave empty space around the canvas. Measure from the drawn playfield.
     const x = (event.clientX - rect.left - (rect.width - canvas.width * scale) / 2) / scale;
     const y = (event.clientY - rect.top - (rect.height - canvas.height * scale) / 2) / scale;
     game.pointer?.(x, y);
@@ -348,7 +349,7 @@ export function createSession({ canvas, display, dialog, actionButton, publish }
   for (const [target, type, handler] of listeners) target.addEventListener(type, handler);
   publish({ soundOn, crtOn, fullscreenEnabled: Boolean(document.fullscreenEnabled) });
   syncFullscreen();
-  select('snake');
+  select(initialGameId);
   frameId = requestAnimationFrame(frame);
 
   return {

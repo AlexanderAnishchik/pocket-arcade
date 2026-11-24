@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Arcade Build"
+  short_description: "Check games, production assets, and Sites readiness"
+  default_prompt: "Use $validate-arcade-build to check whether Pocket Arcade is ready for Sites."

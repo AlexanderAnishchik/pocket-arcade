@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { App } from '../src/App.jsx';
+import { catalog } from '../src/catalog.js';
 
 let frames;
 let time;
@@ -56,6 +57,27 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+test('the library lists and starts every game in the catalog', () => {
+  renderArcade();
+  const library = screen.getByRole('complementary', { name: 'Game library' });
+  const picker = within(library).getByRole('group', { name: 'Select a game' });
+  const cards = within(picker).getAllByRole('button');
+  const ids = Object.keys(catalog);
+  expect(cards.map(card => card.dataset.game)).toEqual(ids);
+  const countLabel = within(library).getByText(/^\d+ GAMES?$/);
+  expect(Number.parseInt(countLabel.textContent, 10)).toBe(ids.length);
+
+  for (const card of cards) {
+    const id = card.dataset.game;
+    fireEvent.click(card);
+    const canvas = screen.getByLabelText(text => text.startsWith(catalog[id].name + ' game.'));
+    fireEvent.keyDown(canvas, { key: 'Enter' });
+    advance(1);
+    expect(canvas.dataset.game).toBe(id);
+    expect(canvas.dataset.phase).toBe('running');
+  }
+});
+
 test('selects a cartridge, starts, pauses, resumes and restarts via the console', () => {
   renderArcade();
   const pause = screen.getByRole('button', { name: 'Pause game' });
@@ -102,6 +124,18 @@ test('awards and persists a Snake best score after eating', () => {
   expect(container.querySelector('#score').textContent).toBe('0010');
   expect(container.querySelector('#best').textContent).toBe('0010');
   expect(JSON.parse(localStorage.getItem('pocket-arcade-bests')).snake).toBe(10);
+});
+
+test('only captures arrow keys during a live round', () => {
+  renderArcade();
+  const canvas = screen.getByLabelText(/^Snake game/);
+  const pressArrowDown = () => fireEvent.keyDown(canvas, { key: 'ArrowDown' });
+
+  expect(pressArrowDown()).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: "Let's play" }));
+  expect(pressArrowDown()).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Pause game' }));
+  expect(pressArrowDown()).toBe(true);
 });
 
 test('Shuffleboard cancels a charge on blur and shoots on a subsequent Space release', () => {

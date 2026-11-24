@@ -1,0 +1,4 @@
+interface:
+  display_name: "Publish Arcade Site"
+  short_description: "Publish a personal arcade or update its ChatGPT Site"
+  default_prompt: "Use $publish-arcade-site to publish my edition of Pocket Arcade."

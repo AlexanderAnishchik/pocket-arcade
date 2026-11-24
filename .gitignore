@@ -1,4 +1,19 @@
-# Local browser testing output.
-.playwright-mcp/
+# Dependencies and generated output.
 node_modules/
-build/
+/build/
+/coverage/
+/.playwright-mcp/
+/.sites-runtime/
+npm-debug.log*
+
+# Local configuration that may hold credentials.
+.env
+.env.*
+!.env.example
+/.npmrc
+/.claude/settings.local.json
+/.claude/worktrees/
+
+# Desktop file manager metadata.
+.DS_Store
+Thumbs.db

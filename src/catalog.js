@@ -1,7 +1,11 @@
+export const initialGameId = "snake";
+
 export const catalog = {
   snake: {
     name: "Snake",
     number: "01",
+    subtitle: "THE HUNGRY ONE",
+    description: "Eat. Grow. Don't crash.",
     color: "#c4e69c",
     mark: "▟",
     tagline: "A little hungry. A little reckless.\nHow long can you go?",
@@ -15,6 +19,8 @@ export const catalog = {
   pong: {
     name: "Pong",
     number: "02",
+    subtitle: "THE RIVALRY",
+    description: "You. The CPU. First to 5.",
     color: "#e6c281",
     mark: "▪ ┆ ▪",
     tagline: "Old-school rivalry. Fresh reflexes.\nBeat the CPU. First to five.",
@@ -28,6 +34,8 @@ export const catalog = {
   breakout: {
     name: "Breakout",
     number: "03",
+    subtitle: "THE SATISFYING ONE",
+    description: "Goodbye, little bricks.",
     color: "#c0bae9",
     mark: "▤ ▤ ▤",
     tagline: "A wall of possibilities.\nMake every bounce count.",
@@ -41,6 +49,8 @@ export const catalog = {
   airhockey: {
     name: "Air Hockey",
     number: "04",
+    subtitle: "THE GLIDE",
+    description: "Own the rink. First to 7.",
     color: "#a5ddd5",
     mark: "◉ ┆ ◉",
     tagline: "A little glide. A little rivalry.\nOwn the rink. First to seven.",
@@ -54,6 +64,8 @@ export const catalog = {
   shuffleboard: {
     name: "Shuffleboard",
     number: "05",
+    subtitle: "THE GENTLE RIVALRY",
+    description: "Hold. Slide. Outplay the CPU.",
     color: "#dfc38b",
     mark: "● ━ ◉",
     tagline: "A little touch. A little luck.\nSlide past the CPU in three rounds.",

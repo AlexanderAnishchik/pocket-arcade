@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Arcade Game"
+  short_description: "Build a playable Pocket Arcade cartridge"
+  default_prompt: "Use $create-arcade-game to add a game to Pocket Arcade."
